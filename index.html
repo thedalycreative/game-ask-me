@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#14090f">
+<title>Ask Me 💌</title>
+<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,700;1,500&family=Quicksand:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#1d0b14; --card:rgba(255,182,206,.07); --card2:rgba(255,182,206,.12);
+    --ink:#fdeef4; --dim:#c99aad;
+    --pink:#ff6b9d; --pink2:#ffa6c5; --gold:#f4c98a; --good:#7de6b5; --bad:#ff8080;
+    --radius:22px;
+    --serif:'Cormorant Garamond',Georgia,serif;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0; padding:0; color:var(--ink);
+    font-family:'Quicksand',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    height:100%; overscroll-behavior:none;
+    background:radial-gradient(120% 90% at 50% 0%, #3d1428 0%, #240d19 45%, var(--bg) 100%) fixed;}
+  body{display:flex; flex-direction:column;}
+  body::before{content:''; position:fixed; inset:0; pointer-events:none; z-index:0;
+    background:
+      radial-gradient(300px 200px at 15% 20%, rgba(255,107,157,.10), transparent 70%),
+      radial-gradient(360px 260px at 85% 75%, rgba(244,201,138,.08), transparent 70%);}
+  /* floating hearts */
+  .heartbg{position:fixed; bottom:-40px; pointer-events:none; z-index:0; opacity:0;
+    animation:float linear infinite;}
+  @keyframes float{
+    0%{transform:translateY(0) rotate(-8deg) scale(.8); opacity:0;}
+    10%{opacity:.35;}
+    90%{opacity:.15;}
+    100%{transform:translateY(-105vh) rotate(10deg) scale(1.15); opacity:0;}
+  }
+  #app{flex:1; display:flex; flex-direction:column; max-width:520px; width:100%; margin:0 auto; padding:16px; min-height:0; position:relative; z-index:1;}
+  h1{font-family:var(--serif); font-size:34px; font-weight:700; letter-spacing:.5px; margin:8px 0 2px;}
+  h2{font-family:var(--serif); font-size:24px; font-weight:700; margin:12px 0 6px; color:var(--pink2);}
+  .dim{color:var(--dim); font-size:14px; line-height:1.5;}
+  .card{background:var(--card); border:1px solid rgba(255,166,197,.14); border-radius:var(--radius); padding:18px; margin:10px 0;
+    box-shadow:0 8px 32px rgba(0,0,0,.25); backdrop-filter:blur(6px);}
+  button{border:0; border-radius:16px; padding:14px 18px; font-size:16px; font-weight:700; font-family:inherit;
+    background:var(--card2); color:var(--ink); cursor:pointer; transition:transform .12s;}
+  button:active{transform:scale(.96);}
+  button.primary{background:linear-gradient(135deg,#ff7fa8,#e2497f 60%,#b23368); color:#fff;
+    box-shadow:0 4px 20px rgba(255,107,157,.45), inset 0 1px 0 rgba(255,255,255,.25);}
+  button.ghost{background:transparent; border:1.5px solid var(--card2);}
+  button:disabled{opacity:.4;}
+  input,textarea,select{width:100%; background:rgba(255,182,206,.08); border:1.5px solid rgba(255,166,197,.22); color:var(--ink);
+    border-radius:14px; padding:12px; font-size:16px; font-family:inherit;}
+  input:focus,textarea:focus{outline:none; border-color:var(--pink); box-shadow:0 0 0 3px rgba(255,107,157,.18);}
+  textarea{resize:none;}
+  .row{display:flex; gap:8px;}
+  .row>*{flex:1;}
+  .chips{display:flex; flex-wrap:wrap; gap:8px; margin:8px 0;}
+  .chip{padding:9px 15px; border-radius:999px; background:var(--card2); font-size:14px; font-weight:600;
+    border:1.5px solid transparent; cursor:pointer; transition:all .15s;}
+  .chip.sel{border-color:var(--pink); background:rgba(255,107,157,.22); color:#fff;
+    box-shadow:0 0 14px rgba(255,107,157,.35);}
+  .screen{display:none; flex-direction:column; flex:1; min-height:0;}
+  .screen.active{display:flex;}
+  .center{display:flex; flex-direction:column; align-items:center; justify-content:center; flex:1; text-align:center; gap:10px;}
+  .bigcode{font-family:var(--serif); font-size:52px; letter-spacing:14px; font-weight:700; color:var(--gold);
+    text-shadow:0 0 24px rgba(244,201,138,.5);}
+  /* score bar */
+  .scorebar{display:flex; gap:4px; margin:10px 0;}
+  .seg{flex:1; height:12px; border-radius:6px; background:var(--card2);}
+  .seg.win{background:var(--good);} .seg.lose{background:var(--bad);}
+  .seg.cur{outline:2px solid var(--gold);}
+  /* chat */
+  #chatLog{flex:1; overflow-y:auto; display:flex; flex-direction:column; gap:8px; padding:8px 0; min-height:0;}
+  .msg{max-width:80%; padding:11px 15px; border-radius:18px 18px 18px 6px; background:var(--card2); font-size:15px; word-break:break-word;
+    border:1px solid rgba(255,166,197,.12);}
+  .msg.me{align-self:flex-end; border-radius:18px 18px 6px 18px;
+    background:linear-gradient(135deg,rgba(255,107,157,.32),rgba(178,51,104,.32));}
+  .msg img{max-width:100%; border-radius:10px; display:block;}
+  .msg.fadein img{animation:fadeup 2.5s ease forwards; opacity:0;}
+  @keyframes fadeup{to{opacity:1;}}
+  .sys{align-self:center; color:var(--dim); font-size:13px; text-align:center;}
+  .ratebtns{display:flex; gap:8px; margin-top:6px;}
+  .ratebtns button{font-size:22px; padding:10px 0; flex:1;}
+  .rb-minus{color:var(--bad);} .rb-plus{color:var(--good);}
+  #timerTop{font-variant-numeric:tabular-nums; font-weight:800; font-size:22px; color:var(--gold); text-align:center;}
+  #timerTop.low{color:var(--bad); animation:pulse 1s infinite;}
+  @keyframes pulse{50%{opacity:.5;}}
+  .banner{background:linear-gradient(135deg,rgba(255,107,157,.16),rgba(255,182,206,.05)); border:1.5px solid rgba(255,107,157,.55);
+    border-radius:var(--radius); padding:16px; margin:8px 0; box-shadow:0 0 24px rgba(255,107,157,.16);}
+  .iou{background:var(--card); border:1.5px dashed rgba(244,201,138,.6); border-radius:14px; padding:12px; margin:6px 0;}
+  .iou b{color:var(--gold);}
+  #panicTimer{font-size:40px; font-weight:800; color:var(--bad); text-align:center;}
+  .toast{position:fixed; bottom:20px; left:50%; transform:translateX(-50%); background:var(--pink); color:#fff;
+    padding:12px 20px; border-radius:999px; font-weight:700; opacity:0; transition:opacity .3s; pointer-events:none; z-index:99;}
+  .toast.show{opacity:1;}
+  .topbar{display:flex; align-items:center; justify-content:space-between; padding-bottom:6px;}
+  .pill{background:var(--card2); border-radius:999px; padding:6px 12px; font-size:13px; color:var(--dim);}
+  label{display:block; margin:12px 0 4px; font-weight:700; font-size:14px; color:var(--pink2);}
+  .oleft{font-size:12px; color:var(--dim); text-align:center; margin-top:4px;}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- HOME -->
+  <div class="screen active" id="s-home">
+    <div class="center">
+      <div style="font-size:56px; filter:drop-shadow(0 0 18px rgba(255,107,157,.6))">💌</div>
+      <h1>Ask Me</h1>
+      <p class="dim" style="font-family:var(--serif); font-size:17px; font-style:italic;">A little game of hearts, for the two of us.<br>Ask sweetly. Answer bravely. Love the reward.</p>
+      <input id="myName" placeholder="Your name" maxlength="12" style="max-width:260px">
+      <button class="primary" style="width:260px" onclick="createRoom()">Create a room</button>
+      <div class="row" style="max-width:260px; width:100%">
+        <input id="joinCode" placeholder="CODE" maxlength="4" style="text-transform:uppercase; text-align:center; letter-spacing:6px">
+        <button onclick="joinRoom()">Join</button>
+      </div>
+      <p class="dim" id="homeStatus"></p>
+    </div>
+  </div>
+
+  <!-- WAITING -->
+  <div class="screen" id="s-wait">
+    <div class="center">
+      <p class="dim">Tell your partner to join with code</p>
+      <div class="bigcode" id="roomCode"></div>
+      <p class="dim">Waiting for them to connect…</p>
+    </div>
+  </div>
+
+  <!-- LOBBY -->
+  <div class="screen" id="s-lobby">
+    <div class="topbar"><h1 style="margin:0">💌</h1><span class="pill" id="lobbyPeers"></span></div>
+    <div id="incomingBox"></div>
+    <div class="card">
+      <h2>Send an ask 💭</h2>
+      <label>I'm feeling…</label>
+      <div class="chips" id="feelChips"></div>
+      <label>Who</label>
+      <div class="chips" id="whoChips"></div>
+      <label>I want… (the ask)</label>
+      <div class="chips" id="actChips"></div>
+      <textarea id="askText" rows="2" placeholder="e.g. nap and cuddle / guess my photo / listen to me vent…"></textarea>
+      <label>Timeframe</label>
+      <div class="chips" id="timeChips"></div>
+      <label>Reward — points + something real</label>
+      <div class="row">
+        <select id="askPts"><option>1</option><option>5</option><option selected>10</option><option>20</option></select>
+        <input id="askReward" placeholder="e.g. a hot milo, a backrub…">
+      </div>
+      <button class="primary" style="width:100%; margin-top:14px" onclick="sendAsk()">Send it 💘</button>
+    </div>
+    <div class="card">
+      <h2>IOU vault 🎟️</h2>
+      <div id="iouList" class="dim">No IOUs yet. Play risky.</div>
+    </div>
+    <p class="sys" id="lobbyLog"></p>
+  </div>
+
+  <!-- GAME -->
+  <div class="screen" id="s-game">
+    <div id="timerTop">—:—</div>
+    <div class="banner" id="gameBanner"></div>
+    <div class="scorebar" id="scorebar"></div>
+    <div id="chatLog"></div>
+    <div id="chatControls">
+      <div id="senderBox" style="display:none">
+        <div class="row">
+          <input id="chatInput" placeholder="Your move… (one message, then wait)">
+          <button style="flex:0 0 auto" onclick="pickPhoto()">📷</button>
+          <button class="primary" style="flex:0 0 auto" onclick="sendChat()">➤</button>
+        </div>
+        <input type="file" id="photoInput" accept="image/*" capture style="display:none">
+        <p class="dim" id="senderHint"></p>
+      </div>
+      <div id="raterBox" style="display:none">
+        <p class="dim" style="text-align:center; margin:4px">Rate their last move</p>
+        <div class="ratebtns">
+          <button class="rb-minus" onclick="rate(-1)">−</button>
+          <button onclick="rate(0)">O</button>
+          <button class="rb-plus" onclick="rate(1)">+</button>
+        </div>
+        <p class="oleft" id="oLeft"></p>
+      </div>
+      <p class="sys" id="waitNote" style="display:none">waiting for them…</p>
+    </div>
+  </div>
+
+  <!-- IOU PANIC -->
+  <div class="screen" id="s-panic">
+    <div class="center">
+      <h1 id="panicTitle">🎟️ You won an IOU!</h1>
+      <p class="dim" id="panicSub">Write what it's for and SAVE — 15 seconds or they write it for you…</p>
+      <div id="panicTimer">15</div>
+      <input id="panicText" placeholder="e.g. do the dishes" style="max-width:300px">
+      <button class="primary" style="width:200px" onclick="savePanic()">SAVE 🔒</button>
+    </div>
+  </div>
+
+  <!-- RESULT -->
+  <div class="screen" id="s-result">
+    <div class="center">
+      <div style="font-size:64px" id="resEmoji"></div>
+      <h1 id="resTitle"></h1>
+      <p class="dim" id="resSub"></p>
+      <button class="primary" style="width:220px" onclick="backToLobby()">Back to lobby</button>
+    </div>
+  </div>
+
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+'use strict';
+// ------- config data -------
+const FEELINGS=['cheeky 😏','hungry 🍜','sad 🥺','tired 😴','annoyed 😤','hot 🔥','horny 😈','needy 🫂','mushy 🥰','angry 😡'];
+const WHOS=['I','you','we','other'];
+const ACTIONS=['play','go to','talk about','open up','clean','ask about','guess my photo','listen to me','share something spicy','nap & cuddle'];
+const TIMES=[['5 mins',300],['15 mins',900],['30 mins',1800],['1 hour',3600],['ever',86400]];
+const START=0, WIN=5, LOSE=-5, O_MAX=3, PANIC_SECS=15;
+
+// ------- state -------
+let peer=null, conn=null, myName='', theirName='partner', isHost=false;
+let sel={feel:FEELINGS[0], who:'we', act:'', time:TIMES[1]};
+let game=null; // {ask, iAmAsker, score, oUsed, turn:'sender'|'rater', endsAt, timerId}
+let ious=JSON.parse(localStorage.getItem('ious')||'[]');
+let panicDeadline=0, panicId=null, panicMine=false;
+
+// ------- helpers -------
+const $=id=>document.getElementById(id);
+function show(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active')); $(id).classList.add('active');}
+function toast(t){const el=$('toast'); el.textContent=t; el.classList.add('show'); setTimeout(()=>el.classList.remove('show'),2500);}
+function send(m){ if(conn&&conn.open) conn.send(m); }
+function chips(elId,items,cur,onpick){
+  const el=$(elId); el.innerHTML='';
+  items.forEach(it=>{
+    const label=Array.isArray(it)?it[0]:it;
+    const c=document.createElement('div'); c.className='chip'+(label===cur?' sel':''); c.textContent=label;
+    c.onclick=()=>{onpick(it); chips(elId,items,label,onpick);};
+    el.appendChild(c);
+  });
+}
+function renderChips(){
+  chips('feelChips',FEELINGS,sel.feel,v=>sel.feel=v);
+  chips('whoChips',WHOS,sel.who,v=>sel.who=v);
+  chips('actChips',ACTIONS,sel.act,v=>{sel.act=v; $('askText').value=v;});
+  chips('timeChips',TIMES,sel.time[0],v=>sel.time=v);
+}
+renderChips();
+function renderIous(){
+  const el=$('iouList');
+  if(!ious.length){el.textContent='No IOUs yet. Play risky.'; return;}
+  el.innerHTML=ious.map(i=>`<div class="iou"><b>${i.holder}</b> is owed: ${i.text} <span class="dim">(${i.when})</span></div>`).join('');
+}
+renderIous();
+function saveIou(holder,text){
+  ious.unshift({holder,text,when:new Date().toLocaleDateString()});
+  localStorage.setItem('ious',JSON.stringify(ious)); renderIous();
+}
+
+// ------- connection -------
+function code4(){const A='ABCDEFGHJKMNPQRSTUVWXYZ23456789'; let s=''; for(let i=0;i<4;i++)s+=A[Math.floor(Math.random()*A.length)]; return s;}
+function requireName(){
+  myName=$('myName').value.trim();
+  if(!myName){toast('Enter your name first 💅'); return false;} return true;
+}
+function createRoom(){
+  if(!requireName()) return;
+  const code=code4();
+  peer=new Peer('askme-room-'+code);
+  peer.on('open',()=>{isHost=true; $('roomCode').textContent=code; show('s-wait');});
+  peer.on('connection',c=>{conn=c; wireConn();});
+  peer.on('error',e=>{$('homeStatus').textContent='Connection error: '+e.type; show('s-home');});
+}
+function joinRoom(){
+  if(!requireName()) return;
+  const code=$('joinCode').value.trim().toUpperCase();
+  if(code.length!==4){toast('Enter the 4-letter code'); return;}
+  $('homeStatus').textContent='Connecting…';
+  peer=new Peer();
+  peer.on('open',()=>{conn=peer.connect('askme-room-'+code,{reliable:true}); wireConn();});
+  peer.on('error',e=>{$('homeStatus').textContent='Could not join: '+e.type;});
+}
+function wireConn(){
+  conn.on('open',()=>{send({t:'hello',name:myName}); enterLobby();});
+  conn.on('data',onMsg);
+  conn.on('close',()=>{toast(theirName+' disconnected 💔'); show('s-home');});
+}
+function enterLobby(){
+  $('lobbyPeers').textContent=myName+' 💞 '+theirName;
+  show('s-lobby');
+}
+
+// ------- messaging -------
+function onMsg(m){
+  switch(m.t){
+    case 'hello': theirName=m.name||'partner'; $('lobbyPeers').textContent=myName+' 💞 '+theirName; if($('s-wait').classList.contains('active')) enterLobby(); break;
+    case 'ask': showIncoming(m.ask); break;
+    case 'reply': handleReply(m); break;
+    case 'chat': recvChat(m); break;
+    case 'rate': recvRate(m); break;
+    case 'end': recvEnd(m); break;
+    case 'panic-start': startPanic(false,m.holder); break;
+    case 'panic-save': finishPanic(m.holder,m.text); break;
+    case 'panic-steal': if(panicMine){/* they get to write it */} startPanicSteal(m.holder); break;
+  }
+}
+
+// ------- asking -------
+function sendAsk(){
+  const text=$('askText').value.trim();
+  if(!text){toast('Write what you want!'); return;}
+  const ask={feel:sel.feel, who:sel.who, text, timeLabel:sel.time[0], secs:sel.time[1],
+             pts:+$('askPts').value, reward:$('askReward').value.trim()||'bragging rights', from:myName};
+  send({t:'ask',ask});
+  $('lobbyLog').textContent='Ask sent… waiting for '+theirName+' 👀';
+  pendingAsk=ask;
+}
+let pendingAsk=null;
+function askSentence(a){
+  return `${a.from} is feeling ${a.feel} and wants ${a.who==='I'?'to':a.who==='you'?'you to':a.who==='we'?'you both to':'someone to'} ${a.text} for ${a.timeLabel} — for ${a.pts} pts and ${a.reward}.`;
+}
+function showIncoming(ask){
+  const box=$('incomingBox');
+  box.innerHTML=`<div class="banner"><b>💌 Incoming ask</b><p>${askSentence(ask)}</p>
+    <div class="row"><button class="primary" id="btnAcc">Accept ✅</button><button id="btnCounter">Counter 🔄</button></div>
+    <div class="row" style="margin-top:8px"><button id="btnSnooze">Snooze ⏰</button><button id="btnRej">Reject ❌</button></div></div>`;
+  $('btnAcc').onclick=()=>{box.innerHTML=''; send({t:'reply',v:'accept'}); startGame(ask,false);};
+  const withComment=(v)=>{const c=prompt('Comment required — say why:'); if(c===null||!c.trim()){toast('Anything but accept needs a comment!'); return;} box.innerHTML=''; send({t:'reply',v,comment:c});};
+  $('btnRej').onclick=()=>withComment('reject');
+  $('btnSnooze').onclick=()=>withComment('snooze');
+  $('btnCounter').onclick=()=>withComment('counter');
+  if(navigator.vibrate) navigator.vibrate([100,50,100]);
+  show('s-lobby');
+}
+function handleReply(m){
+  if(m.v==='accept'){ startGame(pendingAsk,true); }
+  else { $('lobbyLog').textContent=`${theirName} chose ${m.v.toUpperCase()}: “${m.comment}”`; toast(theirName+' → '+m.v); }
+}
+
+// ------- game engine -------
+function startGame(ask,iAmAsker){
+  game={ask,iAmAsker,score:START,oUsed:0,endsAt:Date.now()+ask.secs*1000,timerId:null};
+  $('gameBanner').innerHTML=`<b>${askSentence(ask)}</b><br><span class="dim">${iAmAsker?'You are the ASKER — rate every move with −  O  +':'You are the ASKED — earn +5 before time runs out!'}</span>`;
+  $('chatLog').innerHTML='';
+  sysMsg('Game on! '+(iAmAsker?theirName:'You')+' moves first. One message per turn.');
+  setTurn(iAmAsker?'wait-msg':'send');
+  renderScore();
+  game.timerId=setInterval(tick,250); tick();
+  show('s-game');
+}
+function tick(){
+  if(!game) return;
+  const left=Math.max(0,Math.ceil((game.endsAt-Date.now())/1000));
+  const m=Math.floor(left/60), s=left%60;
+  const el=$('timerTop'); el.textContent=m+':'+String(s).padStart(2,'0');
+  el.classList.toggle('low',left<=30);
+  if(left<=0) timeUp();
+}
+function renderScore(){
+  const bar=$('scorebar'); bar.innerHTML='';
+  for(let v=LOSE;v<=WIN;v++){
+    const seg=document.createElement('div'); seg.className='seg';
+    if(v<0&&game.score<=v) seg.classList.add('lose');
+    if(v>0&&game.score>=v) seg.classList.add('win');
+    if(v===game.score) seg.classList.add('cur');
+    bar.appendChild(seg);
+  }
+}
+function setTurn(mode){
+  $('senderBox').style.display = mode==='send'?'block':'none';
+  $('raterBox').style.display = mode==='rate'?'block':'none';
+  $('waitNote').style.display = (mode==='wait-msg'||mode==='wait-rate')?'block':'none';
+  $('waitNote').textContent = mode==='wait-msg'?('waiting for '+theirName+'’s move…'):('waiting for '+theirName+' to rate you…');
+  $('oLeft').textContent='O passes left: '+(O_MAX-game.oUsed);
+  $('senderHint').textContent='Send your move — then wait for their rating.';
+}
+function sysMsg(t){const d=document.createElement('div'); d.className='sys'; d.textContent=t; $('chatLog').appendChild(d); scrollChat();}
+function bubble(html,me,fade){const d=document.createElement('div'); d.className='msg'+(me?' me':'')+(fade?' fadein':''); d.innerHTML=html; $('chatLog').appendChild(d); scrollChat();}
+function scrollChat(){const c=$('chatLog'); c.scrollTop=c.scrollHeight;}
+
+function sendChat(){
+  const t=$('chatInput').value.trim(); if(!t) return;
+  $('chatInput').value='';
+  bubble(escapeHtml(t),true,false);
+  send({t:'chat',text:t});
+  setTurn('wait-rate');
+}
+function pickPhoto(){ $('photoInput').click(); }
+$('photoInput').addEventListener('change',e=>{
+  const f=e.target.files[0]; if(!f) return;
+  const img=new Image(), url=URL.createObjectURL(f);
+  img.onload=()=>{
+    const c=document.createElement('canvas'); const max=800;
+    const sc=Math.min(1,max/Math.max(img.width,img.height));
+    c.width=img.width*sc; c.height=img.height*sc;
+    c.getContext('2d').drawImage(img,0,0,c.width,c.height);
+    const data=c.toDataURL('image/jpeg',0.6);
+    URL.revokeObjectURL(url);
+    bubble('<img src="'+data+'">',true,false);
+    send({t:'chat',img:data});
+    setTurn('wait-rate');
+  };
+  img.src=url; e.target.value='';
+});
+function recvChat(m){
+  if(m.img) bubble('<img src="'+m.img+'">',false,true);
+  else bubble(escapeHtml(m.text),false,false);
+  if(navigator.vibrate) navigator.vibrate(80);
+  setTurn('rate');
+}
+function rate(delta){
+  if(delta===0){
+    if(game.oUsed>=O_MAX){toast('No O passes left!'); return;}
+    game.oUsed++;
+  } else game.score+=delta;
+  renderScore();
+  send({t:'rate',delta,score:game.score,oUsed:game.oUsed});
+  sysMsg(delta>0?'+1 ⬆️':delta<0?'−1 ⬇️':'O — pass');
+  checkEnd(true);
+}
+function recvRate(m){
+  game.score=m.score; game.oUsed=m.oUsed;
+  renderScore();
+  sysMsg(m.delta>0?'+1 ⬆️ they liked that':m.delta<0?'−1 ⬇️ ouch':'O — passed');
+  checkEnd(false);
+}
+function checkEnd(iRated){
+  if(game.score>=WIN) endGame('asked-win');
+  else if(game.score<=LOSE) endGame('asked-lose');
+  else setTurn(game.iAmAsker ? 'wait-msg' : 'send');
+}
+function timeUp(){
+  // asker failed to decide in time → asker loses, asked gets wildcard IOU
+  endGame('timeout');
+}
+function endGame(kind){
+  if(!game) return;
+  clearInterval(game.timerId);
+  const g=game; game=null;
+  if(g.iAmAsker) send({t:'end',kind}); // asker is authoritative on end broadcast for timeout; harmless dup otherwise
+  resolveEnd(kind,g);
+}
+function recvEnd(m){ if(game){clearInterval(game.timerId); const g=game; game=null; resolveEnd(m.kind,g);} }
+function resolveEnd(kind,g){
+  const iAmAsked=!g.iAmAsker;
+  if(kind==='asked-win'){
+    result('🏆', iAmAsked?'You win!':'They win!', `Reward unlocked: ${g.ask.pts} pts + ${g.ask.reward}`);
+  } else if(kind==='asked-lose'){
+    result('💀', iAmAsked?'You lost…':'You win by KO', iAmAsked?'No reward. Do better 😏':'They flopped. No reward for them.');
+  } else { // timeout — asker loses, asked gets IOU + panic
+    if(iAmAsked){ send({t:'panic-start',holder:myName}); startPanic(true,myName); }
+    else { toast('Timer died on your watch — they get a wildcard IOU 🎟️'); }
+  }
+}
+function result(emoji,title,sub){ $('resEmoji').textContent=emoji; $('resTitle').textContent=title; $('resSub').textContent=sub; show('s-result'); }
+function backToLobby(){ $('lobbyLog').textContent=''; show('s-lobby'); }
+
+// ------- IOU panic -------
+function startPanic(mine,holder){
+  panicMine=mine;
+  $('panicTitle').textContent = mine ? '🎟️ You won an IOU!' : '🎟️ '+holder+' won an IOU';
+  $('panicSub').textContent = mine ? 'Write what it’s for and SAVE — '+PANIC_SECS+'s or THEY write it for you…'
+                                   : 'They have '+PANIC_SECS+' seconds to lock it in…';
+  $('panicText').style.display = mine?'block':'none';
+  document.querySelector('#s-panic button').style.display = mine?'block':'none';
+  $('panicText').value='';
+  panicDeadline=Date.now()+PANIC_SECS*1000;
+  clearInterval(panicId);
+  panicId=setInterval(()=>{
+    const left=Math.max(0,Math.ceil((panicDeadline-Date.now())/1000));
+    $('panicTimer').textContent=left;
+    if(left<=0){
+      clearInterval(panicId);
+      if(panicMine){ send({t:'panic-steal',holder:myName}); $('panicSub').textContent='Too slow! '+theirName+' is writing your IOU… 😈'; }
+    }
+  },200);
+  show('s-panic');
+}
+function savePanic(){
+  const t=$('panicText').value.trim();
+  if(!t){toast('Write something!'); return;}
+  if(Date.now()>panicDeadline){toast('Too late!'); return;}
+  clearInterval(panicId);
+  send({t:'panic-save',holder:myName,text:t});
+  finishPanic(myName,t);
+}
+function startPanicSteal(holder){
+  // the OTHER player (not holder) writes the IOU
+  clearInterval(panicId);
+  if(myName!==holder){
+    const t=prompt('They were too slow! YOU write their IOU (they still hold it):')||'a punch 👊';
+    send({t:'panic-save',holder,text:t});
+    finishPanic(holder,t);
+  } else {
+    $('panicSub').textContent=theirName+' is writing your IOU… good luck.';
+  }
+}
+function finishPanic(holder,text){
+  clearInterval(panicId);
+  saveIou(holder,text);
+  result('🎟️', holder+' holds an IOU', '“'+text+'” — saved to the vault.');
+}
+
+// floating hearts backdrop
+(function(){
+  const glyphs=['💗','💞','🌹','💌','✨','💕'];
+  for(let i=0;i<10;i++){
+    const h=document.createElement('div');
+    h.className='heartbg'; h.textContent=glyphs[i%glyphs.length];
+    h.style.left=(Math.random()*100)+'vw';
+    h.style.fontSize=(14+Math.random()*22)+'px';
+    h.style.animationDuration=(14+Math.random()*16)+'s';
+    h.style.animationDelay=(-Math.random()*20)+'s';
+    document.body.appendChild(h);
+  }
+})();
+
+function escapeHtml(s){return s.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+</script>
+</body>
+</html>
