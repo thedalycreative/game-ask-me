@@ -2,7 +2,7 @@
 
 > A little two-player game of hearts: create a room, share the code, ask sweetly, answer bravely and win IOUs.
 
-**Live demo:** [ask-me-game.vercel.app](https://ask-me-game.vercel.app)
+**Live demo:** [ask-me-game-lyart.vercel.app](https://ask-me-game-lyart.vercel.app)
 
 ![HTML5](https://img.shields.io/badge/HTML5-E34F26?style=flat-square) ![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?style=flat-square) ![PeerJS](https://img.shields.io/badge/PeerJS-FF6B8B?style=flat-square) ![Vercel](https://img.shields.io/badge/Vercel-000000?style=flat-square)
 
@@ -30,7 +30,7 @@ npx serve .        # open in two browsers to play
 
 ## Deployment (Vercel)
 
-Static site, repo root is the output. The Vercel project **ask-me-game** deploys `main` to **https://ask-me-game.vercel.app**. (Previously deployed by CLI as `ask-game`; source recovered from that deployment.)
+Static site, repo root is the output. The Vercel project **ask-me-game** deploys `main` to **https://ask-me-game-lyart.vercel.app** (the plain `ask-me-game.vercel.app` address belongs to another Vercel account). (Previously deployed by CLI as `ask-game`; source recovered from that deployment.)
 
 ## Screenshots
 
@@ -41,7 +41,7 @@ Static site, repo root is the output. The Vercel project **ask-me-game** deploys
   <img src="docs/screenshots/mobile.jpg" alt="On a phone" width="260">
 </p>
 
-_Captured from the live site (https://ask-me-game.vercel.app). Regenerate with any headless browser; files live in `docs/screenshots/`._
+_Captured from the live site (https://ask-me-game-lyart.vercel.app). Regenerate with any headless browser; files live in `docs/screenshots/`._
 
 ---
 
